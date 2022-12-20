@@ -1,0 +1,72 @@
+---
+title: "Regression"
+author: "Skye Jung"
+date: "11/3/2020"
+output: html_document
+---
+```{r}
+library(dplyr)
+
+# Previous Wrangled Dataset
+
+MassShootings=read.csv("/Users/skyejung/Downloads/datasets_2778_6345_Mass Shootings Dataset Ver 2.csv")
+
+Mass_Shootings=MassShootings%>%
+  mutate(Gender=gsub("Male","M",Gender))%>%
+  mutate(Gender=gsub("Female","F",Gender))%>%
+  mutate(Gender=gsub("M/F","Unknown",Gender))%>%
+  mutate(Mental_Health_Issues=gsub("Unclear","Unknown",Mental.Health.Issues))%>%
+  mutate(Mental_Health_Issues=gsub("unknown","Unknown",Mental_Health_Issues))%>%
+  rename(Total_Victims=Total.victims)%>%
+  mutate(Race=ifelse(grepl("lack",Race),"Black",
+      ifelse(grepl("sian",Race),"Asian",ifelse(grepl("hite",Race),
+     "White",ifelse(grepl("atino",Race),"Latino",ifelse(grepl("ative",Race),
+      "Native American/Alaskan Native", ifelse(grepl("known",Race),"Unknown",
+      "Other")))))))%>%
+  select(Location,Date,Fatalities,Injured,Total_Victims,Mental_Health_Issues,
+         Race,Gender,Longitude,Latitude)
+```
+
+# Part A
+```{r}
+# Multiple Regression Model
+
+MSData=Mass_Shootings%>%
+  filter(Longitude!="NaN")%>%
+  filter(Latitude!="NaN")%>%
+  select(Injured,Fatalities,Longitude,Latitude)
+
+VictimsModel=lm(Fatalities~.,MSData)
+summary(VictimsModel)
+
+library(MASS)
+AICmodel=stepAIC(VictimsModel,direction="both",trace=FALSE)
+detach("package:MASS")
+summary(AICmodel)
+
+newvalues=data.frame(Injured=11)
+predict(AICmodel,newvalues, interval = "predict")
+```
+
+# Part B
+```{r}
+# Logistic Regression Model
+
+New=Mass_Shootings%>%
+  filter(Mental_Health_Issues==c("Yes","No"))%>%
+  mutate(MentalHealth=ifelse(Mental_Health_Issues=="Yes",1,0))%>%
+  select(MentalHealth,Fatalities,Injured,Total_Victims)
+
+logit=glm(MentalHealth~., data=New,family = "binomial")
+summary(logit)
+
+library(MASS)
+new.logit=stepAIC(logit,direction = "both",trace = FALSE)
+detach("package:MASS")
+summary(new.logit)
+
+newvalues<-data.frame(Total_Victims=c(6,50))
+predict(new.logit,newvalues,type = "response")
+#predicts percent chance shooter has mental health issues based on total victims
+```
+

@@ -1,0 +1,46 @@
+---
+title: "Project 1/2 Sample Inference"
+author: "Skye Jung"
+date: "11/24/2020"
+output: html_document
+---
+```{r}
+library(dplyr)
+MassShootings=read.csv("/Users/skyejung/Downloads/datasets_2778_6345_Mass Shootings Dataset Ver 2.csv")
+
+#Subsetting / Cleaning Data
+Mass_Shootings=MassShootings%>%
+  mutate(Gender=gsub("Male","M",Gender))%>%
+  mutate(Gender=gsub("Female","F",Gender))%>%
+  mutate(Gender=gsub("M/F","Unknown",Gender))%>%
+  mutate(Mental_Health_Issues=gsub("Unclear","Unknown",Mental.Health.Issues))%>%
+  mutate(Mental_Health_Issues=gsub("unknown","Unknown",Mental_Health_Issues))%>%
+  rename(Total_Victims=Total.victims)%>%
+  mutate(Race=ifelse(grepl("lack",Race),"Black",
+      ifelse(grepl("sian",Race),"Asian",ifelse(grepl("hite",Race),
+     "White",ifelse(grepl("atino",Race),"Latino",ifelse(grepl("ative",Race),
+      "Native American/Alaskan Native", ifelse(grepl("known",Race),"Unknown",
+      "Other")))))))%>%
+  select(Location,Date,Fatalities,Injured,Total_Victims,Mental_Health_Issues,
+         Race,Gender,Longitude,Latitude)
+```
+
+# Part A
+```{r}
+# One Sample Confidence Interval
+
+t.test(Mass_Shootings$Total_Victims,conf.level=0.95)
+```
+Interpretation: We are 95% confident that the true mean number of total victims in all US mass shootings is between 6.474751 and 13.900249.
+
+# Part B
+```{r}
+# Two Sample Hypothesis Test
+
+New=Mass_Shootings%>%
+  filter(Mental_Health_Issues==c("Yes","No"))%>%
+  select(Mental_Health_Issues,Total_Victims)
+
+t.test(Total_Victims~Mental_Health_Issues,alternative="less",data=New)
+```
+Interpretation: We have enough statistical evidence to conclude that mass shooting events by shooters without mental health issues, on average, have less total victims compared to mass shooting events by shooters with mental health issues.

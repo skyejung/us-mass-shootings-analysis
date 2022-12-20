@@ -1,0 +1,69 @@
+---
+title: "Project - Data Wrangling"
+author: "Skye Jung"
+date: "10/14/2020"
+output: html_document
+---
+```{r}
+library(dplyr)
+MassShootings=read.csv("/Users/skyejung/Downloads/datasets_2778_6345_Mass Shootings Dataset Ver 2.csv")
+
+#Subsetting / Cleaning Data
+Mass_Shootings=MassShootings%>%
+  mutate(Gender=gsub("Male","M",Gender))%>%
+  mutate(Gender=gsub("Female","F",Gender))%>%
+  mutate(Gender=gsub("M/F","Unknown",Gender))%>%
+  mutate(Mental_Health_Issues=gsub("Unclear","Unknown",Mental.Health.Issues))%>%
+  mutate(Mental_Health_Issues=gsub("unknown","Unknown",Mental_Health_Issues))%>%
+  rename(Total_Victims=Total.victims)%>%
+  mutate(Race=ifelse(grepl("lack",Race),"Black",
+      ifelse(grepl("sian",Race),"Asian",ifelse(grepl("hite",Race),
+     "White",ifelse(grepl("atino",Race),"Latino",ifelse(grepl("ative",Race),
+      "Native American/Alaskan Native", ifelse(grepl("known",Race),"Unknown",
+      "Other")))))))%>%
+  select(Location,Date,Fatalities,Injured,Total_Victims,Mental_Health_Issues,
+         Race,Gender,Longitude,Latitude)
+```
+
+```{r}
+# Center / Spread Measures
+summary(Mass_Shootings$Injured)
+summary(Mass_Shootings$Fatalities)
+summary(Mass_Shootings$Total_Victims)
+apply(Mass_Shootings[,c(3,4,5)],2,sd,na.rm=T)
+apply(Mass_Shootings[,c(3,4,5)],2,IQR,na.rm=T)
+```
+
+```{r}
+# Frequency Tables
+Mass_Shootings%>%
+  select(Race,Mental_Health_Issues)%>%
+  table()
+
+Mass_Shootings%>%
+  group_by(Race)%>%
+  summarize(Count=n())
+
+Mass_Shootings%>%
+  group_by(Gender)%>%
+  summarize(Count=n())
+
+Mass_Shootings%>%
+  group_by(Race,Gender)%>%
+  summarize(Count=n())
+```
+```{r}
+# Summary of Numerical Variables by Groups
+Mass_Shootings%>%
+  group_by(Race)%>%
+  summarize(median(Total_Victims),median(Injured),median(Fatalities))
+
+Mass_Shootings%>%
+  group_by(Gender)%>%
+  summarize(median(Total_Victims),median(Injured),median(Fatalities))
+
+Mass_Shootings%>%
+  group_by(Mental_Health_Issues)%>%
+  summarize(median(Total_Victims),median(Injured),median(Fatalities))
+```
+
