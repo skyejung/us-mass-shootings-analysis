@@ -1,0 +1,65 @@
+---
+title: "Project Data Visualization"
+author: "Skye Jung"
+date: "10/26/2020"
+output: html_document
+---
+```{r}
+library(ggplot2)
+library(dplyr)
+library(RColorBrewer)
+
+# Previous Wrangled Dataset
+
+MassShootings=read.csv("/Users/skyejung/Downloads/datasets_2778_6345_Mass Shootings Dataset Ver 2.csv")
+
+Mass_Shootings=MassShootings%>%
+  mutate(Gender=gsub("Male","M",Gender))%>%
+  mutate(Gender=gsub("Female","F",Gender))%>%
+  mutate(Gender=gsub("M/F","Unknown",Gender))%>%
+  mutate(Mental_Health_Issues=gsub("Unclear","Unknown",Mental.Health.Issues))%>%
+  mutate(Mental_Health_Issues=gsub("unknown","Unknown",Mental_Health_Issues))%>%
+  rename(Total_Victims=Total.victims)%>%
+  mutate(Race=ifelse(grepl("lack",Race),"Black",
+      ifelse(grepl("sian",Race),"Asian",ifelse(grepl("hite",Race),
+     "White",ifelse(grepl("atino",Race),"Latino",ifelse(grepl("ative",Race),
+      "Native American/Alaskan Native", ifelse(grepl("known",Race),"Unknown",
+      "Other")))))))%>%
+  select(Location,Date,Fatalities,Injured,Total_Victims,Mental_Health_Issues,
+         Race,Gender,Longitude,Latitude)
+```
+
+# Part A
+```{r}
+# Bar Graph & Histogram
+MS=Mass_Shootings%>%
+  group_by(Race)%>%
+  summarize(Counts=n())%>%
+  mutate(Percentage=Counts/nrow(Mass_Shootings))
+
+ggplot(MS,aes(x=Race, y=Percentage))+
+  geom_bar(fill=brewer.pal(7,"Set3"),stat = "identity")+
+  theme(axis.text.x = element_text(angle = 90))
+
+ggplot(Mass_Shootings,aes(x=Fatalities))+
+  geom_histogram(bins = sqrt(nrow(Mass_Shootings)), fill="skyblue", color="white")
+```
+
+# Part B
+```{r}
+# Side-by-Side Box plot & Scatterplot
+ggplot(Mass_Shootings, aes(x=Race, y=Fatalities))+geom_boxplot(fill="pink")+
+  theme(axis.text.x = element_text(angle = 90))
+
+ggplot(Mass_Shootings, aes(x=Fatalities, y=Injured,color=Gender))+
+  geom_point(alpha=0.3)
+```
+
+# Part C
+```{r}
+# Facet-wrapped graph
+ggplot(Mass_Shootings,aes(x=Race, fill=Gender))+geom_bar(position = "fill")+
+  facet_wrap(~Mental_Health_Issues)+
+  theme(axis.text.x = element_text(angle = 90))
+```
+
